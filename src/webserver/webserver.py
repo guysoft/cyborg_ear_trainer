@@ -100,6 +100,53 @@ class User(UserMixin, db.Model):
         return "%d/%s/%s" % (self.id, self.name)
 
 
+class Sound(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    path = db.Column(db.String(30), unique=True)
+    picture = db.Column(db.String(100))
+
+    def __init__(self, id, name, path, picture):
+        self.id = id
+        self.name = name
+        self.path = path
+        self.picture = picture
+
+    def __repr__(self):
+        return "%s/%s" % (self.id, self.name)
+    
+    
+class Question(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sound_ids = db.Column(db.PickleType())
+    difficulty = db.Column(db.Integer())
+
+    def __init__(self, id, name, sound_ids, difficulty):
+        self.id = id
+        self.name = name
+        self.sound_ids = sound_ids
+        self.difficulty = difficulty
+        
+    def __repr__(self):
+        return "%s/%s" % (self.id, self.name)
+    
+    
+class Lesion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(30))
+    question_ids = db.Column(db.PickleType())
+    difficulty = db.Column(db.Integer())
+
+    def __init__(self, id, name, question_ids, difficulty):
+        self.id = id
+        self.name = name
+        self.question_ids = question_ids
+        self.difficulty = difficulty
+        
+    def __repr__(self):
+        return "%s/%s" % (self.id, self.name)
+
+
 Base = declarative_base()
 
 
@@ -207,6 +254,7 @@ def run():
 
 
 def mysql_init_db(uri, settings):
+    #TODO FIX, for now create the database by hand
     mysql_engine = create_engine(uri)
     print(uri)
     mysql_engine.execute("CREATE DATABASE IF NOT EXISTS {0} ".format(settings["db"]["db_name"]))
