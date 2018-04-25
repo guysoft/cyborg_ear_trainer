@@ -1,0 +1,10 @@
+[webserver]
+port=5000
+init_password=1234
+
+[db]
+host=127.0.0.1
+port=3306
+user=root
+password=password
+db_name=cyborg_ear_trainer
