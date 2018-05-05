@@ -232,7 +232,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return Response('<p>Logged out</p>')
+    return redirect('/')
 
 
 # handle login failed

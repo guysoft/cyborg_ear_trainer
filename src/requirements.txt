@@ -4,7 +4,7 @@ wtforms
 sqlalchemy
 werkzeug
 flask-login
-flask-bootstrap
+flask-bootstrap4
 flask-sqlalchemy
 flask_wtf
 mysql-connector-python-rf
