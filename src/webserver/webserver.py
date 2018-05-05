@@ -5,7 +5,7 @@ import os
 import sys
 from io import BytesIO
 from wtforms import StringField, PasswordField, BooleanField
-from wtforms.validators import InputRequired, Length
+from wtforms.validators import InputRequired, Length, EqualTo
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, after_this_request, request, Response, redirect, url_for, abort
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
@@ -86,6 +86,13 @@ login_manager.init_app(app)
 app.config.setdefault('BOOTSTRAP_SERVE_LOCAL', True)
 Bootstrap(app)
 
+settings = get_config()
+engine = create_engine(get_uri(settings))
+Session = sessionmaker()
+Session.configure(bind=engine)
+session = Session()
+
+
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -163,26 +170,20 @@ class AppConfig(Base):
         return "%d/%s/%s" % (self.id, self.name)
 
 
-def init_db(uri):
+def init_db():
     """
     Checks if db is init, if not inits it
 
     :return:
     """
-    engine = create_engine(uri)
     User.metadata.create_all(engine)
     AppConfig.metadata.create_all(engine)
 
     # Add admin if does not exist
-
-    Session = sessionmaker()
-    Session.configure(bind=engine)
-    session = Session()
-
     user = session.query(User).first()
     if user is None:
         settings = get_config()
-        entry = User(id=0, username="admin", password=settings["webserver"]["init_password"])
+        entry = User(username="admin", password=settings["webserver"]["init_password"])
         session.add(entry)
         session.commit()
         print('First run, created database with user admin')
@@ -205,6 +206,12 @@ class LoginForm(FlaskForm):
     password = PasswordField('password', validators=[InputRequired(), Length(min=4, max=80)])
     remember = BooleanField('remember me')
 
+class SignupForm(FlaskForm):
+    username = StringField('username', validators=[InputRequired(), Length(min=4, max=15)])
+    password = PasswordField('password', validators=[InputRequired(), Length(min=4, max=80)])
+    password2 = PasswordField('password2', validators=[InputRequired(), EqualTo('password', message='Passwords must match')])
+    remember = BooleanField('remember me')
+
 
 @app.route("/")
 @login_required
@@ -225,7 +232,24 @@ def login():
             form.password.errors.append('Invalid username or password')
 
     return render_template('login.jinja2', form=form)
+# set_login_view('login')
 
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    form = SignupForm()
+
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data.strip()).first()
+        if user is not None:
+            form.password.errors.append('username already exist!')
+        else:
+            user = User(username=form.username.data.strip(), password=form.password.data)
+            session.add(user)
+            session.commit()
+            login_user(user, remember=form.remember.data)
+
+    return render_template('signup.jinja2', form=form)
 
 # somewhere to logout
 @app.route("/logout")
@@ -262,9 +286,8 @@ def mysql_init_db(uri, settings):
 
 
 if __name__ == "__main__":
-    settings = get_config()
     mysql_init_db(get_uri(settings), settings)
-    init_db(get_uri(settings))
+    init_db()
     run()
 
 
