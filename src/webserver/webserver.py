@@ -96,7 +96,7 @@ class User(UserMixin, db.Model):
         self.password = generate_password_hash(password, method='sha256')
 
     def __repr__(self):
-        return "%d/%s/%s" % (self.id, self.name)
+        return "%d/%s" % (self.id, self.username)
 
 
 class Sound(db.Model):
