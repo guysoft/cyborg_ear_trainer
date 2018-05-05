@@ -83,6 +83,7 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 login_manager.init_app(app)
+app.config.setdefault('BOOTSTRAP_SERVE_LOCAL', True)
 Bootstrap(app)
 
 
